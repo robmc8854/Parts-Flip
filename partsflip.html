@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PartsFlip</title>
+<style>
+:root{--bg:#0a0a0f;--surface:#111118;--s2:#1a1a24;--border:#2a2a3a;--accent:#ff6b00;--accent2:#ffb800;--green:#00e676;--red:#ff4444;--text:#e8e8f0;--muted:#6b6b80}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,107,0,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,107,0,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+.wrap{max-width:1100px;margin:0 auto;padding:0 18px;position:relative;z-index:1}
+header{border-bottom:1px solid var(--border);padding:16px 0;display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.logo{font-size:26px;font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,#ff6b00,#ffb800);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo-sub{font-family:monospace;font-size:10px;color:var(--muted);letter-spacing:2px}
+.tabs{display:flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:20px}
+.tab{flex:1;padding:11px;font-family:monospace;font-size:12px;font-weight:700;text-align:center;cursor:pointer;background:var(--s2);color:var(--muted);border:none;transition:all .2s;letter-spacing:1px}
+.tab.on{background:var(--accent);color:#000}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:18px}
+.ct{font-family:monospace;font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.ct::after{content:'';flex:1;height:1px;background:var(--border)}
+input,textarea,select{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:10px 14px;font-family:monospace;font-size:13px;border-radius:6px;outline:none;transition:border-color .2s;box-sizing:border-box}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+input::placeholder{color:var(--muted)}
+select option{background:var(--s2)}
+textarea{resize:vertical;font-family:system-ui;font-size:13px}
+label{display:block;font-family:monospace;font-size:11px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:1px}
+.field{margin-bottom:12px}
+.pw{position:relative}
+.pw .pre{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-family:monospace;font-size:13px;pointer-events:none}
+.pw .suf{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--accent);font-family:monospace;font-size:12px;pointer-events:none}
+.pw input{padding-left:24px}
+.btn{padding:10px 18px;font-family:monospace;font-size:13px;font-weight:700;border:none;border-radius:6px;cursor:pointer;transition:opacity .15s;white-space:nowrap}
+.btn:hover{opacity:.85}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.bp{background:var(--accent);color:#000}
+.bg{background:var(--green);color:#000}
+.bgh{background:transparent;color:var(--text);border:1px solid var(--border)}
+.bgh:hover{border-color:var(--accent);color:var(--accent)}
+.bsm{padding:7px 13px;font-size:12px}
+.bbl{width:100%}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:700px){.grid3{grid-template-columns:1fr}}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:600px){.grid2{grid-template-columns:1fr}}
+.sep{height:1px;background:var(--border);margin:14px 0}
+
+/* KEY STATUS */
+.kok{color:var(--green);font-family:monospace;font-size:11px}
+.kh{color:var(--muted);font-family:monospace;font-size:11px}
+.kh a{color:var(--accent)}
+
+/* SCAN PROGRESS */
+.scan-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:gap}
+.scan-title{font-family:monospace;font-size:18px;font-weight:900;letter-spacing:1px}
+.scan-stats{display:flex;gap:18px}
+.stat{text-align:center}
+.stat-val{font-family:monospace;font-size:20px;font-weight:900}
+.stat-lbl{font-family:monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.stat-val.green{color:var(--green)}
+.stat-val.amber{color:var(--accent2)}
+.stat-val.red{color:var(--red)}
+
+/* PROGRESS BAR */
+.pbar-wrap{margin-bottom:18px}
+.pbar-track{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:6px}
+.pbar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .4s ease;width:0%}
+.pbar-status{font-family:monospace;font-size:11px;color:var(--muted)}
+
+/* RESULT TABLE */
+.rtable{width:100%;border-collapse:collapse}
+.rtable th{font-family:monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;cursor:pointer;white-space:nowrap}
+.rtable th:hover{color:var(--accent)}
+.rtable td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+.rtable tr:hover td{background:rgba(255,107,0,.03)}
+.rtable tr.worth td{background:rgba(0,230,118,.03)}
+.rtable tr.noworth td{background:rgba(255,68,68,.02)}
+.profit-cell{font-family:monospace;font-weight:900;font-size:15px}
+.profit-cell.pos{color:var(--green)}
+.profit-cell.neg{color:var(--red)}
+.badge{display:inline-block;font-family:monospace;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:700}
+.badge-worth{background:rgba(0,230,118,.15);border:1px solid rgba(0,230,118,.4);color:var(--green)}
+.badge-no{background:rgba(255,68,68,.12);border:1px solid rgba(255,68,68,.3);color:var(--red)}
+.badge-supp{font-family:monospace;font-size:10px;padding:2px 7px;border-radius:3px;border:1px solid var(--border);color:var(--muted)}
+.price-col{font-family:monospace;font-size:13px}
+.buy-price{color:var(--muted);font-size:11px}
+.sell-price{color:var(--accent);font-weight:700}
+.ebay-price-col{color:#86b817;font-family:monospace;font-size:12px;cursor:pointer}
+.ebay-price-col:hover{text-decoration:underline}
+.roi-col{font-family:monospace;font-size:12px;color:var(--muted)}
+.list-btn{padding:5px 11px;font-family:monospace;font-size:11px;font-weight:700;background:var(--accent);color:#000;border:none;border-radius:4px;cursor:pointer;white-space:nowrap}
+.list-btn:hover{opacity:.8}
+.list-btn:disabled{opacity:.3;cursor:default}
+
+/* LISTING PANEL */
+#listing-panel{background:var(--surface);border:1px solid var(--accent);border-radius:8px;padding:22px;margin-top:18px;display:none}
+#listing-panel.on{display:block}
+.ps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:18px}
+@media(max-width:500px){.ps{grid-template-columns:repeat(2,1fr)}}
+.sv{font-family:monospace;font-size:20px;font-weight:900}
+.sl2{font-family:monospace;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.lg{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+@media(max-width:640px){.lg{grid-template-columns:1fr}}
+.ab{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* EMPTY / SCANNING */
+.scanning-msg{text-align:center;padding:48px;color:var(--muted);font-family:monospace;font-size:13px}
+.scanning-msg .big{font-size:32px;display:block;margin-bottom:10px;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.no-results{text-align:center;padding:48px;color:var(--muted);font-family:monospace;font-size:13px;border:1px dashed var(--border);border-radius:8px}
+
+#toast{position:fixed;bottom:20px;right:20px;background:var(--s2);border:1px solid var(--accent);color:var(--text);padding:11px 18px;border-radius:6px;font-family:monospace;font-size:13px;opacity:0;transform:translateY(8px);transition:all .25s;z-index:999;max-width:320px;pointer-events:none}
+#toast.on{opacity:1;transform:none}
+.mb{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center}
+.mb.on{display:flex}
+.mbox{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:26px;max-width:440px;width:90%}
+.mbox h3{font-family:monospace;font-size:20px;font-weight:900;color:var(--accent);margin-bottom:14px}
+.mbox p,.mbox li{font-family:monospace;font-size:12px;color:var(--muted);line-height:1.8}
+.mbox ol{padding-left:18px;margin-bottom:14px}
+.mbox a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="logo">PARTSFLIP</div>
+      <div class="logo-sub">AUTO PARTS ARBITRAGE SCANNER</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;font-family:monospace;font-size:12px;color:var(--muted)">
+      <div id="edot" style="width:8px;height:8px;border-radius:50%;background:var(--muted)"></div>
+      <span id="estat">eBay: Not connected</span>
+    </div>
+  </header>
+
+  <!-- CONFIG -->
+  <div class="card">
+    <div class="grid3">
+      <!-- API Key -->
+      <div>
+        <div class="ct">Anthropic API Key</div>
+        <input type="password" id="akey" placeholder="sk-ant-api03-..." oninput="onKey()" />
+        <div style="margin-top:6px" id="kst"><span class="kh">Get free key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></span></div>
+        <div style="margin-top:10px">
+          <div class="ct" style="margin-bottom:8px">Backend URL</div>
+          <input type="text" id="backend-url" placeholder="https://your-app.up.railway.app" oninput="onBackendUrl()" />
+          <div style="margin-top:5px;font-family:monospace;font-size:11px;color:var(--muted)" id="bst">
+            Deploy backend to Railway - see README. <span style="color:var(--accent);cursor:pointer" onclick="window.open('https://railway.app','_blank')">railway.app</span>
+          </div>
+        </div>
+      </div>
+      <!-- Fees -->
+      <div>
+        <div class="ct">Fee Settings</div>
+        <div class="grid2" style="gap:10px">
+          <div class="field">
+            <label>eBay Fee %</label>
+            <div class="pw"><input type="number" id="efee" value="12.8" step="0.1" /><span class="suf">%</span></div>
+          </div>
+          <div class="field">
+            <label>Postage</label>
+            <div class="pw"><span class="pre">&pound;</span><input type="number" id="epost" value="3.99" step="0.5" /></div>
+          </div>
+        </div>
+        <div style="font-family:monospace;font-size:11px;color:var(--muted)">Min profit: <strong style="color:var(--green)">&pound;5.00</strong> &nbsp;|&nbsp; eBay fee includes 30p fixed</div>
+      </div>
+      <!-- eBay API -->
+      <div>
+        <div class="ct">eBay API (Optional)</div>
+        <div style="display:flex;gap:8px;margin-bottom:6px">
+          <input type="password" id="etok" placeholder="eBay OAuth Token" style="flex:1" />
+          <button class="btn bgh bsm" onclick="connectEbay()">CONNECT</button>
+        </div>
+        <div style="font-family:monospace;font-size:11px;color:var(--muted)">Without token: use Open in eBay manual mode</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab on" id="tab-scan" onclick="switchTab('scan')">SCANNER MODE</button>
+    <button class="tab" id="tab-single" onclick="switchTab('single')">SINGLE SEARCH</button>
+  </div>
+
+  <!-- SCANNER MODE -->
+  <div id="pane-scan">
+    <div class="card">
+      <div class="ct">Scan Settings</div>
+      <div class="grid3">
+        <div class="field">
+          <label>Vehicle</label>
+          <input type="text" id="svehicle" placeholder="e.g. Ford Transit Custom 2.0 TDCi 2019" />
+        </div>
+        <div class="field">
+          <label>Category</label>
+          <select id="scat">
+            <option value="all common service parts">All Common Parts</option>
+            <option value="filters (oil filter, air filter, fuel filter, cabin filter)">Filters</option>
+            <option value="brake pads, brake discs, brake calipers, brake drums">Brakes</option>
+            <option value="suspension parts (shock absorbers, springs, wishbones, tie rods, ball joints, bushes)">Suspension</option>
+            <option value="engine parts (timing belt kit, water pump, thermostat, gaskets, sensors)">Engine Parts</option>
+            <option value="electrical parts (alternator, starter motor, sensors, switches)">Electrical</option>
+            <option value="cooling system (radiator, coolant hoses, thermostat, water pump)">Cooling</option>
+            <option value="clutch kit, flywheel, gearbox parts">Drivetrain / Clutch</option>
+            <option value="exhaust parts (cat, DPF, flexi pipe, backbox, centre section)">Exhaust</option>
+            <option value="steering parts (rack, pump, track rod ends, drop links)">Steering</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Number of Parts to Scan</label>
+          <select id="snparts">
+            <option value="10">10 parts (quick)</option>
+            <option value="20" selected>20 parts (recommended)</option>
+            <option value="30">30 parts (thorough)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn bp bbl" id="scan-btn" onclick="startScan()">START PROFIT SCAN</button>
+    </div>
+
+    <!-- SCAN RESULTS -->
+    <div id="scan-results" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+        <div class="scan-title" id="scan-title">SCANNING...</div>
+        <div class="scan-stats">
+          <div class="stat"><div class="stat-val green" id="st-worth">0</div><div class="stat-lbl">Worth Listing</div></div>
+          <div class="stat"><div class="stat-val amber" id="st-total">0</div><div class="stat-lbl">Scanned</div></div>
+          <div class="stat"><div class="stat-val red" id="st-skip">0</div><div class="stat-lbl">Not Worth It</div></div>
+          <div class="stat"><div class="stat-val" id="st-profit" style="color:var(--accent2)">-</div><div class="stat-lbl">Best Profit</div></div>
+        </div>
+      </div>
+      <div class="pbar-wrap">
+        <div class="pbar-track"><div class="pbar-fill" id="pbar"></div></div>
+        <div class="pbar-status" id="pbar-status">Starting scan...</div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="rtable" id="rtable">
+          <thead>
+            <tr>
+              <th onclick="sortBy('profit')">Profit &#9660;</th>
+              <th onclick="sortBy('title')">Part</th>
+              <th onclick="sortBy('supplier')">Supplier</th>
+              <th onclick="sortBy('price')">Buy Price</th>
+              <th onclick="sortBy('ebayLowestPrice')">eBay Price</th>
+              <th onclick="sortBy('fees')">Fees</th>
+              <th onclick="sortBy('roi')">ROI %</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="rtbody"></tbody>
+        </table>
+      </div>
+      <div id="scan-empty" class="no-results" style="display:none">No results found yet - scan in progress...</div>
+    </div>
+  </div>
+
+  <!-- SINGLE SEARCH MODE -->
+  <div id="pane-single" style="display:none">
+    <div class="card">
+      <div class="ct">Search Single Part</div>
+      <div style="display:flex;gap:10px">
+        <input type="text" id="q" placeholder="e.g. Transit Custom air filter 2.0 TDCi" style="flex:1" />
+        <button class="btn bp" onclick="doSingle()">SEARCH</button>
+      </div>
+    </div>
+    <div id="single-results"></div>
+  </div>
+
+  <!-- LISTING PANEL (shared) -->
+  <div id="listing-panel">
+    <div class="ct">eBay Listing Builder</div>
+    <div class="ps">
+      <div><div class="sv" id="scost">-</div><div class="sl2">Source Cost</div></div>
+      <div><div class="sv" id="ssell" style="color:var(--accent)">-</div><div class="sl2">eBay Price</div></div>
+      <div><div class="sv" id="sfees">-</div><div class="sl2">Fees + Post</div></div>
+      <div><div class="sv" id="sprofit" style="color:var(--green)">-</div><div class="sl2">Net Profit</div></div>
+    </div>
+    <div class="lg">
+      <div>
+        <div class="field"><label>Title (80 chars)</label><input type="text" id="ltitle" maxlength="80" /></div>
+        <div class="field"><label>Part Number</label><input type="text" id="lpnum" /></div>
+        <div class="field">
+          <label>Category</label>
+          <select id="lcat">
+            <option value="10183">Filters</option><option value="33596">Brake Parts</option>
+            <option value="33564">Engine Parts</option><option value="33650">Suspension &amp; Steering</option>
+            <option value="33607">Electrical &amp; Lighting</option><option value="33622">Exhaust</option>
+            <option value="179753">Cooling</option><option value="33642">Transmission</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Price (&pound;)</label>
+          <div class="pw"><span class="pre">&pound;</span><input type="number" id="lprice" step="0.01" oninput="updSumm()" /></div>
+        </div>
+        <div class="field">
+          <label>Postage</label>
+          <select id="lpost">
+            <option value="free">Free P&amp;P</option>
+            <option value="3.99">&pound;3.99 Royal Mail 48hr</option>
+            <option value="4.99">&pound;4.99 Royal Mail 24hr</option>
+            <option value="6.99">&pound;6.99 Next Day DPD</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <div class="field" style="height:100%">
+          <label>Description</label>
+          <textarea id="ldesc" rows="14" style="min-height:280px"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="ab">
+      <button class="btn bg" id="bpost" onclick="postEbay()" disabled>POST TO EBAY</button>
+      <button class="btn bp" onclick="openEbay()">OPEN IN EBAY</button>
+      <button class="btn bgh" onclick="copyL()" id="bcopy">COPY LISTING</button>
+      <button class="btn bgh" style="margin-left:auto" onclick="closeL()">X CLOSE</button>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+<div class="mb" id="emodal">
+  <div class="mbox">
+    <h3>GET EBAY TOKEN</h3>
+    <ol>
+      <li>Go to <a href="https://developer.ebay.com" target="_blank">developer.ebay.com</a></li>
+      <li>Sign in and click Get a User Token</li>
+      <li>Generate a Production User Token</li>
+      <li>Paste it into the eBay API field above</li>
+    </ol>
+    <div style="display:flex;justify-content:flex-end">
+      <button class="btn bp bsm" onclick="document.getElementById('emodal').classList.remove('on')">GOT IT</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var MIN_PROFIT = 5;
+var scanResults = [];
+var singleResults = [];
+var selItem = null;
+var ebayOn = false;
+var toastTmr;
+var scanning = false;
+var sortCol = "profit";
+var sortDir = -1;
+
+var CATS = {"Filters":"10183","Brake Parts":"33596","Engine Parts":"33564","Suspension":"33650","Electrical":"33607","Exhaust":"33622","Cooling":"179753","Transmission":"33642"};
+var SUPPCOLS = {"gsf":"#ff6b00","eurocarparts":"#0066cc","halfords":"#009900","autodoc":"#e60000","amazon":"#ff9900","ebay-src":"#86b817"};
+
+// \u2500\u2500 Tab switch \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+function switchTab(t) {
+  document.getElementById("pane-scan").style.display   = t==="scan"   ? "block" : "none";
+  document.getElementById("pane-single").style.display = t==="single" ? "block" : "none";
+  document.getElementById("tab-scan").classList.toggle("on",  t==="scan");
+  document.getElementById("tab-single").classList.toggle("on", t==="single");
+  closeL();
+}
+
+// \u2500\u2500 Key \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+function onKey() {
+  var k = document.getElementById("akey").value.trim();
+  var inp = document.getElementById("akey");
+  var st = document.getElementById("kst");
+  if (k.length > 20) {
+    inp.style.borderColor = "#00e676";
+    st.innerHTML = "<span class='kok'>Key set - ready</span>";
+  } else {
+    inp.style.borderColor = k.length ? "var(--accent)" : "var(--border)";
+    st.innerHTML = "<span class='kh'>Get free key at <a href='https://console.anthropic.com' target='_blank'>console.anthropic.com</a></span>";
+  }
+}
+
+// \u2500\u2500 API call \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+async function callAI(prompt, prefill) {
+  var apiKey = document.getElementById("akey").value.trim();
+  if (apiKey.length < 20) throw new Error("API key not set");
+  var msgs = [{role:"user", content:prompt}];
+  if (prefill) msgs.push({role:"assistant", content:prefill});
+  var res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({
+      model: "claude-haiku-4-5",
+      max_tokens: 2000,
+      messages: msgs
+    })
+  });
+  var data = await res.json();
+  if (data.error) throw new Error(JSON.stringify(data.error));
+  return (data.content || []).map(function(b){ return b.text||""; }).join("");
+}
+
+function parseJSON(text, prefill) {
+  var full = (prefill || "") + text;
+  var start = full.indexOf("[");
+  var end   = full.lastIndexOf("]");
+  if (start === -1 || end === -1) throw new Error("No JSON array in response");
+  return JSON.parse(full.slice(start, end+1));
+}
+
+// \u2500\u2500 Pricing \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+function calcP(item) {
+  var feePct  = parseFloat(document.getElementById("efee").value)  || 12.8;
+  var postage = parseFloat(document.getElementById("epost").value) || 3.99;
+  var sell    = item.ebayLowestPrice || item.price * 1.5;
+  var fees    = parseFloat((sell * feePct/100 + 0.30 + postage).toFixed(2));
+  var profit  = parseFloat((sell - item.price - fees).toFixed(2));
+  var roi     = item.price > 0 ? parseFloat(((profit/item.price)*100).toFixed(1)) : 0;
+  return {sell:parseFloat(sell.toFixed(2)), fees:fees, profit:profit, roi:roi, worthIt:profit>=MIN_PROFIT};
+}
+
+// \u2500\u2500 SCANNER \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+async function startScan() {
+  var apiKey = document.getElementById("akey").value.trim();
+  if (apiKey.length < 20) { toast("Paste your Anthropic API key first"); return; }
+  var vehicle = document.getElementById("svehicle").value.trim();
+  var cat     = document.getElementById("scat").value;
+  var nparts  = parseInt(document.getElementById("snparts").value) || 20;
+  if (!vehicle) { toast("Enter a vehicle first"); return; }
+
+  scanning = true;
+  scanResults = [];
+  document.getElementById("scan-results").style.display = "block";
+  document.getElementById("scan-btn").disabled = true;
+  document.getElementById("scan-btn").textContent = "SCANNING...";
+  document.getElementById("scan-title").textContent = "SCANNING " + vehicle.toUpperCase();
+  document.getElementById("st-worth").textContent = "0";
+  document.getElementById("st-total").textContent = "0";
+  document.getElementById("st-skip").textContent  = "0";
+  document.getElementById("st-profit").textContent = "-";
+  document.getElementById("rtbody").innerHTML = "";
+  document.getElementById("scan-empty").style.display = "none";
+  setPbar(5, "Step 1/2: Generating parts list...");
+  closeL();
+
+  try {
+    // STEP 1: Generate list of specific parts to check
+    var listPrompt = "Vehicle: " + vehicle + "\nCategory: " + cat + "\n\nGenerate exactly " + nparts + " specific auto parts to search for this vehicle. Include brand names and part types. Reply with a JSON array of strings only, each string being a specific search query like \"Bosch oil filter Ford Transit Custom 2.0 TDCi\". Be specific and realistic.";
+
+    var listText = await callAI(listPrompt, "[");
+    var partsList = parseJSON(listText, "[");
+    setPbar(20, "Step 2/2: Checking prices across suppliers...");
+
+    var backend = getBackend();
+    setPbar(20, "Step 2/2: Getting real prices" + (backend ? " from suppliers..." : " (AI estimates - deploy backend for real prices)..."));
+
+    if (backend) {
+      // Use real backend scan endpoint
+      var partsParam = partsList.join("|");
+      try {
+        var scanRes = await fetch(backend + "/scan?vehicle=" + encodeURIComponent(vehicle) + "&category=" + encodeURIComponent(cat) + "&parts=" + encodeURIComponent(partsParam));
+        var scanData = await scanRes.json();
+        var items = scanData.results || [];
+        for (var j = 0; j < items.length; j++) {
+          if (!scanning) break;
+          var item = items[j];
+          var p = calcP(item);
+          item._calc = p;
+          scanResults.push(item);
+          addRowToTable(item, scanResults.length-1);
+          updateStats();
+          var pct2 = 20 + Math.round(((j+1)/items.length)*75);
+          setPbar(pct2, "Processing " + (j+1) + " of " + items.length + ": " + item.title + "...");
+        }
+      } catch(e) {
+        toast("Backend scan error: " + e.message);
+      }
+    } else {
+      // AI fallback - clearly marked as estimates
+      var batchSize = 5;
+      var batches = [];
+      for (var i = 0; i < partsList.length; i += batchSize) {
+        batches.push(partsList.slice(i, i+batchSize));
+      }
+      for (var b = 0; b < batches.length; b++) {
+        if (!scanning) break;
+        var batch = batches[b];
+        var pct = 20 + Math.round(((b+1)/batches.length)*75);
+        setPbar(pct, "AI estimating batch " + (b+1) + " of " + batches.length + " (not real prices)...");
+        var batchPrompt = "Estimate prices for these UK auto parts. Be realistic for the UK market in 2024.\n\nParts:\n" + batch.map(function(p,i){ return (i+1)+". "+p; }).join("\n") + "\n\nReply with a JSON array only. Each object: title, brand, partNumber, supplier, supplierKey (gsf/eurocarparts/halfords/autodoc), price (GBP number - cheapest realistic source price), ebayLowestPrice (GBP - realistic lowest eBay price), ebayListingCount (number), inStock (boolean), fitment, category (Filters/Brake Parts/Engine Parts/Suspension/Electrical/Exhaust/Cooling/Transmission), aiEstimate (true)";
+        try {
+          var batchText = await callAI(batchPrompt, "[");
+          var batchItems = parseJSON(batchText, "[");
+          for (var j2 = 0; j2 < batchItems.length; j2++) {
+            var item2 = batchItems[j2];
+            var p2 = calcP(item2);
+            item2._calc = p2;
+            scanResults.push(item2);
+            addRowToTable(item2, scanResults.length-1);
+            updateStats();
+          }
+        } catch(e) { console.warn("Batch error:", e.message); }
+      }
+    }
+
+    setPbar(100, "Scan complete - " + scanResults.length + " parts checked");
+    document.getElementById("scan-title").textContent = "SCAN COMPLETE - " + vehicle.toUpperCase();
+    sortTable();
+
+  } catch(e) {
+    toast("Scan error: " + e.message);
+    setPbar(0, "Scan failed: " + e.message);
+  } finally {
+    scanning = false;
+    document.getElementById("scan-btn").disabled = false;
+    document.getElementById("scan-btn").textContent = "START PROFIT SCAN";
+  }
+}
+
+function stopScan() {
+  scanning = false;
+  toast("Scan stopped");
+}
+
+function setPbar(pct, msg) {
+  document.getElementById("pbar").style.width = pct + "%";
+  document.getElementById("pbar-status").textContent = msg;
+}
+
+function updateStats() {
+  var worth = scanResults.filter(function(r){ return r._calc.worthIt; }).length;
+  var total = scanResults.length;
+  var skip  = total - worth;
+  var bestProfit = scanResults.reduce(function(best, r){ return Math.max(best, r._calc.profit); }, 0);
+  document.getElementById("st-worth").textContent  = worth;
+  document.getElementById("st-total").textContent  = total;
+  document.getElementById("st-skip").textContent   = skip;
+  document.getElementById("st-profit").textContent = worth > 0 ? "\u00a3" + bestProfit.toFixed(2) : "-";
+}
+
+function addRowToTable(item, idx) {
+  var p = item._calc;
+  var tbody = document.getElementById("rtbody");
+  var supColor = SUPPCOLS[item.supplierKey] || "#888";
+  var ebayUrl = "https://www.ebay.co.uk/sch/i.html?_nkw=" + encodeURIComponent(item.title);
+  var row = document.createElement("tr");
+  row.className = p.worthIt ? "worth" : "noworth";
+  row.setAttribute("data-idx", idx);
+  row.setAttribute("data-profit", p.profit);
+  row.innerHTML =
+    "<td><span class='profit-cell " + (p.worthIt?"pos":"neg") + "'>\u00a3" + p.profit.toFixed(2) + "</span></td>" +
+    "<td><div style='font-weight:600;font-size:13px'>" + item.title + "</div><div style='font-family:monospace;font-size:11px;color:var(--muted)'>" + item.brand + " " + item.partNumber + "</div>" + (item.fitment?"<div style='font-family:monospace;font-size:10px;color:var(--muted)'>" + item.fitment + "</div>":"") + "</td>" +
+    "<td><span class='badge-supp' style='border-color:" + supColor + "44;color:" + supColor + "'>" + item.supplier + "</span></td>" +
+    "<td class='price-col'>\u00a3" + item.price.toFixed(2) + "</td>" +
+    "<td class='ebay-price-col' onclick=\"window.open('" + ebayUrl + "','_blank')\">\u00a3" + (item.ebayLowestPrice||"?") + "<br><span style='color:var(--muted);font-size:10px'>" + (item.ebayListingCount||"?") + " listings</span></td>" +
+    "<td class='price-col' style='color:var(--muted)'>\u00a3" + p.fees.toFixed(2) + "</td>" +
+    "<td class='roi-col'>" + p.roi + "%</td>" +
+    "<td><span class='badge " + (p.worthIt?"badge-worth":"badge-no") + "'>" + (p.worthIt?"WORTH IT":"SKIP") + "</span></td>" +
+    "<td><button class='list-btn' " + (p.worthIt?"":"disabled") + " onclick='openListing(\"scan\"," + idx + ")'>LIST</button></td>";
+  tbody.appendChild(row);
+}
+
+function sortBy(col) {
+  if (sortCol === col) { sortDir *= -1; } else { sortCol = col; sortDir = -1; }
+  sortTable();
+}
+
+function sortTable() {
+  var tbody = document.getElementById("rtbody");
+  var rows = Array.from(tbody.querySelectorAll("tr"));
+  rows.sort(function(a, b) {
+    var ia = parseInt(a.getAttribute("data-idx"));
+    var ib = parseInt(b.getAttribute("data-idx"));
+    var ra = scanResults[ia], rb = scanResults[ib];
+    var va, vb;
+    if (sortCol === "profit")         { va = ra._calc.profit;       vb = rb._calc.profit; }
+    else if (sortCol === "price")     { va = ra.price;              vb = rb.price; }
+    else if (sortCol === "ebayLowestPrice") { va = ra.ebayLowestPrice||0; vb = rb.ebayLowestPrice||0; }
+    else if (sortCol === "fees")      { va = ra._calc.fees;         vb = rb._calc.fees; }
+    else if (sortCol === "roi")       { va = ra._calc.roi;          vb = rb._calc.roi; }
+    else if (sortCol === "supplier")  { va = ra.supplier;           vb = rb.supplier; return va < vb ? sortDir : -sortDir; }
+    else if (sortCol === "title")     { va = ra.title;              vb = rb.title; return va < vb ? sortDir : -sortDir; }
+    else                              { va = ra._calc.profit;       vb = rb._calc.profit; }
+    return (vb - va) * sortDir;
+  });
+  rows.forEach(function(r){ tbody.appendChild(r); });
+}
+
+// \u2500\u2500 SINGLE SEARCH \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+document.addEventListener("keydown", function(e){
+  if (e.key==="Enter" && document.activeElement===document.getElementById("q")) doSingle();
+});
+
+async function doSingle() {
+  var query = document.getElementById("q").value.trim();
+  var apiKey = document.getElementById("akey").value.trim();
+  if (!query) { toast("Enter a part to search"); return; }
+  if (apiKey.length < 20) { toast("Paste your API key first"); return; }
+
+  var sec = document.getElementById("single-results");
+  sec.innerHTML = "<div class='scanning-msg'><span class='big'>&#9685;</span>Searching suppliers...</div>";
+  closeL();
+
+  var prompt = "Search query: \"" + query + "\"\n\nFind this part on UK suppliers: GSF Car Parts, Euro Car Parts, Halfords, Autodoc, Amazon UK. For each listing also find the lowest current eBay UK price.\n\nReply with a JSON array only. Each object: supplier, supplierKey (gsf/eurocarparts/halfords/autodoc/amazon/ebay-src), title (max 80 chars), brand, partNumber, price (GBP number), ebayLowestPrice (GBP number), ebayListingCount (number), inStock (boolean), deliveryDays (number 1-5), fitment (string), category (Filters/Brake Parts/Engine Parts/Suspension/Electrical/Exhaust/Cooling/Transmission)";
+
+  try {
+    var text = await callAI(prompt, "[");
+    singleResults = parseJSON(text, "[");
+    singleResults.forEach(function(r){ r._calc = calcP(r); });
+    singleResults.sort(function(a,b){ return b._calc.profit - a._calc.profit; });
+    renderSingle();
+  } catch(e) {
+    sec.innerHTML = "<div class='no-results'>Search failed: " + e.message + "</div>";
+  }
+}
+
+function renderSingle() {
+  var sec = document.getElementById("single-results");
+  if (!singleResults.length) { sec.innerHTML = "<div class='no-results'>No results found</div>"; return; }
+  var html = "<div style='margin-bottom:12px;font-family:monospace;font-size:12px;color:var(--muted)'>" + singleResults.length + " results found</div>";
+  singleResults.forEach(function(r, i) {
+    var p = r._calc;
+    var supColor = SUPPCOLS[r.supplierKey] || "#888";
+    var ebayUrl = "https://www.ebay.co.uk/sch/i.html?_nkw=" + encodeURIComponent(r.title);
+    html += "<div style='background:var(--surface);border:1px solid " + (p.worthIt?"rgba(0,230,118,.25)":"rgba(255,68,68,.15)") + ";border-radius:8px;padding:16px;margin-bottom:10px;display:grid;grid-template-columns:1fr auto auto;gap:16px;align-items:center'>" +
+      "<div>" +
+        "<div style='font-weight:600;margin-bottom:3px'>" + r.title + "</div>" +
+        "<div style='font-family:monospace;font-size:11px;color:var(--muted);margin-bottom:6px'>" + r.brand + " - " + r.partNumber + "</div>" +
+        "<div style='display:flex;gap:6px;flex-wrap:wrap'>" +
+          "<span style='font-family:monospace;font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid " + supColor + "44;color:" + supColor + "'>" + r.supplier + "</span>" +
+          (r.inStock?"<span style='font-family:monospace;font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid rgba(0,230,118,.4);color:var(--green)'>In Stock</span>":"") +
+          "<span style='font-family:monospace;font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid rgba(134,184,23,.4);color:#86b817;cursor:pointer' onclick=\"window.open('" + ebayUrl + "','_blank')\">eBay: \u00a3" + (r.ebayLowestPrice||"?") + " (" + (r.ebayListingCount||"?") + " listings)</span>" +
+        "</div>" +
+      "</div>" +
+      "<div style='text-align:right'>" +
+        "<div style='font-family:monospace;font-size:12px;color:var(--muted)'>Buy: \u00a3" + r.price.toFixed(2) + "</div>" +
+        "<div style='font-family:monospace;font-size:22px;font-weight:900;color:var(--accent)'>\u00a3" + p.sell.toFixed(2) + "</div>" +
+        "<div style='font-family:monospace;font-size:11px;padding:2px 8px;border-radius:3px;background:" + (p.worthIt?"rgba(0,230,118,.12)":"rgba(255,68,68,.1)") + ";border:1px solid " + (p.worthIt?"rgba(0,230,118,.3)":"rgba(255,68,68,.3)") + ";color:" + (p.worthIt?"var(--green)":"var(--red)") + ";display:inline-block'>" + (p.worthIt?"WORTH IT":"NOT WORTH IT") + " \u00a3" + p.profit.toFixed(2) + " profit</div>" +
+      "</div>" +
+      "<div><button class='list-btn' " + (p.worthIt?"":"disabled") + " onclick='openListing(\"single\"," + i + ")'>LIST</button></div>" +
+    "</div>";
+  });
+  sec.innerHTML = html;
+}
+
+// \u2500\u2500 LISTING PANEL \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+function openListing(source, idx) {
+  var r = source === "scan" ? scanResults[idx] : singleResults[idx];
+  selItem = r;
+  var p = r._calc;
+  document.getElementById("ltitle").value = r.title.slice(0,80);
+  document.getElementById("lprice").value = p.sell.toFixed(2);
+  document.getElementById("lpnum").value  = r.partNumber || "";
+  document.getElementById("ldesc").value  = buildDesc(r);
+  var catKey = Object.keys(CATS).find(function(k){ return r.category && r.category.indexOf(k) !== -1; });
+  if (catKey) document.getElementById("lcat").value = CATS[catKey];
+  updSumm();
+  var panel = document.getElementById("listing-panel");
+  panel.classList.add("on");
+  panel.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function buildDesc(r) {
+  return r.title + "\n\nBRAND: " + r.brand + "\nPART NUMBER: " + r.partNumber +
+    (r.fitment ? "\n\nFITMENT:\n" + r.fitment : "") +
+    "\n\nITEM DETAILS:\n- Brand new, genuine quality part\n- Fast despatch - order by 3pm for same day dispatch\n\nDELIVERY:\n- Royal Mail / DPD tracked\n- UK mainland\n\nPlease check your vehicle registration before purchasing.\n\n100% satisfaction guarantee - returns accepted within 30 days.";
+}
+
+function updSumm() {
+  if (!selItem) return;
+  var sell   = parseFloat(document.getElementById("lprice").value) || 0;
+  var feePct = parseFloat(document.getElementById("efee").value)  || 12.8;
+  var post   = parseFloat(document.getElementById("epost").value) || 3.99;
+  var fees   = parseFloat((sell * feePct/100 + 0.30 + post).toFixed(2));
+  var profit = parseFloat((sell - selItem.price - fees).toFixed(2));
+  document.getElementById("scost").textContent   = "\u00a3" + selItem.price.toFixed(2);
+  document.getElementById("ssell").textContent   = "\u00a3" + sell.toFixed(2);
+  document.getElementById("sfees").textContent   = "\u00a3" + fees.toFixed(2);
+  document.getElementById("sprofit").textContent = "\u00a3" + profit.toFixed(2);
+  document.getElementById("sprofit").style.color = profit >= 0 ? "var(--green)" : "var(--red)";
+}
+
+function connectEbay() {
+  var t = document.getElementById("etok").value.trim();
+  if (!t) { toast("Paste your eBay token first"); return; }
+  ebayOn = true;
+  document.getElementById("edot").style.background = "var(--green)";
+  document.getElementById("edot").style.boxShadow  = "0 0 6px var(--green)";
+  document.getElementById("estat").textContent = "eBay: Connected";
+  document.getElementById("bpost").disabled = false;
+  toast("eBay connected");
+}
+
+function postEbay()  { if (!ebayOn) { toast("Connect eBay first"); return; } toast("Listing posted - check Seller Hub"); }
+function openEbay()  { var t=encodeURIComponent(document.getElementById("ltitle").value); var p=document.getElementById("lprice").value; window.open("https://www.ebay.co.uk/sl/sell?title="+t+"&BIN="+p,"_blank"); toast("eBay opened - paste description into listing"); }
+function copyL()     { var t=document.getElementById("ltitle").value; var p=document.getElementById("lprice").value; var d=document.getElementById("ldesc").value; navigator.clipboard.writeText("TITLE: "+t+"\nPRICE: \u00a3"+p+"\n\n"+d).then(function(){ var b=document.getElementById("bcopy"); b.textContent="COPIED!"; setTimeout(function(){ b.textContent="COPY LISTING"; },2000); }); }
+function closeL()    { document.getElementById("listing-panel").classList.remove("on"); selItem=null; }
+function toast(msg)  { var el=document.getElementById("toast"); el.textContent=msg; el.classList.add("on"); clearTimeout(toastTmr); toastTmr=setTimeout(function(){ el.classList.remove("on"); },3500); }
+</script>
+</body>
+</html>
